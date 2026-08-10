@@ -141,11 +141,17 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
+  if (intent === "removeFromQueue") {
+    return restockVariant({
+      variantId: formData.get("variantId"),
+      removeFromQueue: true,
+    });
+  }
+
   if (intent === "restock") {
     return restockVariant({
       variantId: formData.get("variantId"),
-      quantityValue:
-        formData.get("quantity"),
+      quantityValue: formData.get("quantity"),
     });
   }
 
