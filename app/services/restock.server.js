@@ -13,31 +13,21 @@ export async function restockVariant({
     };
   }
 
-  const quantity = Number(quantityValue);
-
-  if (!Number.isInteger(quantity) || quantity < 1) {
-    return {
-      success: false,
-      intent: "restock",
-      message: "Enter a valid restock quantity.",
-    };
-  }
-
   const restockItem = await db.restockItem.findUnique({
     where: {
       shopifyVariantId: variantId,
     },
   });
 
-    if (!restockItem) {
-      return {
-        success: false,
-        intent: "restock",
-        message: "Restock item not found.",
-      };
-    }
+  if (!restockItem) {
+    return {
+      success: false,
+      intent: "restock",
+      message: "Restock item not found.",
+    };
+  }
 
-    if (removeFromQueue) {
+  if (removeFromQueue) {
     await db.restockItem.update({
       where: {
         shopifyVariantId: variantId,
@@ -53,18 +43,29 @@ export async function restockVariant({
     };
   }
 
-  if (restockItem.inventoryQuantity <= 0) {
+  const quantity = Number(quantityValue);
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
     return {
-        success: false,
-        intent: "restock",
-        message: "No inventory available to restock.",
+      success: false,
+      intent: "restock",
+      message: "Enter a valid restock quantity.",
     };
   }
+
+  if (restockItem.inventoryQuantity <= 0) {
+    return {
+      success: false,
+      intent: "restock",
+      message: "No inventory available to restock.",
+    };
+  }
+
   if (quantity > restockItem.inventoryQuantity) {
     return {
-        success: false,
-        intent: "restock",
-        message: `Only ${restockItem.inventoryQuantity} item(s) available to restock.`,
+      success: false,
+      intent: "restock",
+      message: `Only ${restockItem.inventoryQuantity} item(s) available to restock.`,
     };
   }
 
