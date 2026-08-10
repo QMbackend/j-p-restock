@@ -3,6 +3,7 @@ import db from "../db.server";
 export async function restockVariant({
   variantId,
   quantityValue,
+  removeFromQueue = false,
 }) {
   if (!variantId || typeof variantId !== "string") {
     return {
@@ -28,11 +29,27 @@ export async function restockVariant({
     },
   });
 
-  if (!restockItem) {
+    if (!restockItem) {
+      return {
+        success: false,
+        intent: "restock",
+        message: "Restock item not found.",
+      };
+    }
+
+    if (removeFromQueue) {
+    await db.restockItem.update({
+      where: {
+        shopifyVariantId: variantId,
+      },
+      data: {
+        needsRestock: 0,
+      },
+    });
+
     return {
-      success: false,
-      intent: "restock",
-      message: "Restock item not found.",
+      success: true,
+      intent: "removeFromQueue",
     };
   }
 

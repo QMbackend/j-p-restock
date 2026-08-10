@@ -209,6 +209,7 @@ export default function RestockCard({ item }) {
         />
       </div>
 
+    {canRestock ? (
       <restockFetcher.Form method="post">
         <input
           type="hidden"
@@ -244,14 +245,15 @@ export default function RestockCard({ item }) {
               type="number"
               name="quantity"
               min="1"
-              max={availableToRestock}
-              defaultValue={
-                canRestock
-                  ? availableToRestock
-                  : ""
-              }
-              required={canRestock}
-              disabled={!canRestock}
+              max={Math.min(
+                item.needsRestock,
+                item.inventory,
+              )}
+              defaultValue={Math.min(
+                item.needsRestock,
+                item.inventory,
+              )}
+              required
               style={{
                 width: "90px",
                 minHeight: "36px",
@@ -266,16 +268,52 @@ export default function RestockCard({ item }) {
           <s-button
             type="submit"
             variant="primary"
-            disabled={!canRestock || isRestocking}
+            disabled={isRestocking}
           >
-            {!canRestock
-              ? "No Inventory Available"
-              : isRestocking
-                ? "Restocking..."
-                : "Confirm Restock"}
+            {isRestocking
+              ? "Restocking..."
+              : "Confirm Restock"}
           </s-button>
         </div>
       </restockFetcher.Form>
+    ) : (
+      <restockFetcher.Form method="post">
+        <input
+          type="hidden"
+          name="intent"
+          value="removeFromQueue"
+        />
+
+        <input
+          type="hidden"
+          name="variantId"
+          value={item.shopifyVariantId}
+        />
+
+        <div
+          style={{
+            display: "grid",
+            gap: "10px",
+          }}
+        >
+          <div
+            style={{
+              color: "#6d7175",
+              fontSize: "14px",
+            }}
+          >
+            No inventory available to restock.
+          </div>
+
+          <s-button
+            type="submit"
+            variant="secondary"
+          >
+            Remove from Queue
+          </s-button>
+        </div>
+      </restockFetcher.Form>
+    )}
     </div>
   );
 }

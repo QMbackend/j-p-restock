@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "22981c170d8645156e8d7dc73a92223e"
-application_url = "https://example.com"
+application_url = "https://j-p-restock.onrender.com"
 embedded = true
 name = "J&P Restock"
 
@@ -21,7 +21,7 @@ api_version = "2026-07"
   topics = [ "app/scopes_update" ]
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://j-p-restock.onrender.com/api/auth" ]
 
 [build]
 automatically_update_urls_on_dev = true
