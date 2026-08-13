@@ -33,6 +33,7 @@ function formatLastSold(lastSaleAt) {
 
   const saleDate = new Date(lastSaleAt);
   const now = new Date();
+
   const differenceInMinutes = Math.floor(
     (now.getTime() - saleDate.getTime()) / 60_000,
   );
@@ -49,10 +50,34 @@ function formatLastSold(lastSaleAt) {
     return `${differenceInMinutes} minutes ago`;
   }
 
-  return saleDate.toLocaleTimeString([], {
+  const saleDay = new Date(saleDate);
+  saleDay.setHours(0, 0, 0, 0);
+
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const time = saleDate.toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",
   });
+
+  if (saleDay.getTime() === today.getTime()) {
+    return time;
+  }
+
+  if (saleDay.getTime() === yesterday.getTime()) {
+    return `Yesterday at ${time}`;
+  }
+
+  const date = saleDate.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+  });
+
+  return `${date} at ${time}`;
 }
 
 export default function RestockCard({ item }) {

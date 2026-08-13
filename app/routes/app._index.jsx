@@ -15,7 +15,8 @@ import RestockCard from "../components/RestockCard";
 import SummaryCards from "../components/SummaryCards";
 
 export const loader = async ({ request }) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
+  const shop = session.shop;
 
   const shopResponse = await admin.graphql(
     `#graphql
@@ -42,6 +43,7 @@ export const loader = async ({ request }) => {
 
   const items = await db.restockItem.findMany({
     where: {
+      shop,
       needsRestock: {
         gt: 0,
       },
@@ -75,6 +77,7 @@ export const loader = async ({ request }) => {
     await db.processedLineItem.groupBy({
       by: ["shopifyVariantId"],
       where: {
+        shop,
         soldAt: {
           gte: storeDayStartDate,
         },
@@ -135,14 +138,15 @@ export const loader = async ({ request }) => {
 };
 
 export const action = async ({ request }) => {
-  const { admin } =
-    await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
+  const shop = session.shop;
 
   const formData = await request.formData();
   const intent = formData.get("intent");
 
   if (intent === "removeFromQueue") {
     return restockVariant({
+      shop,
       variantId: formData.get("variantId"),
       removeFromQueue: true,
     });
@@ -150,6 +154,7 @@ export const action = async ({ request }) => {
 
   if (intent === "restock") {
     return restockVariant({
+      shop,
       variantId: formData.get("variantId"),
       quantityValue: formData.get("quantity"),
     });
@@ -157,7 +162,7 @@ export const action = async ({ request }) => {
 
   if (intent === "sync") {
     const result =
-      await syncRecentOrders(admin);
+      await syncRecentOrders(admin, shop);
 
     return {
       ...result,

@@ -4,9 +4,13 @@ import { authenticate } from "../shopify.server";
 import db from "../db.server";
 
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
+  const shop = session.shop;
 
   const events = await db.restockEvent.findMany({
+    where: {
+      shop,
+    },
     orderBy: {
       createdAt: "desc",
     },
@@ -21,6 +25,7 @@ export const loader = async ({ request }) => {
 
   const restockItems = await db.restockItem.findMany({
     where: {
+      shop,
       shopifyVariantId: {
         in: variantIds,
       },

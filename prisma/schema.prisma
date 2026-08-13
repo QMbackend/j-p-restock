@@ -35,7 +35,8 @@ model Session {
 
 model RestockItem {
   id                Int      @id @default(autoincrement())
-  shopifyVariantId  String   @unique
+  shop              String?
+  shopifyVariantId  String
   productTitle      String
   variantTitle      String?
   imageURL          String?
@@ -44,21 +45,29 @@ model RestockItem {
   lastSaleAt        DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  @@unique([shop, shopifyVariantId])
 }
 
 model RestockEvent {
   id               Int      @id @default(autoincrement())
+  shop             String?
   shopifyVariantId String
   quantity         Int
   createdAt        DateTime @default(now())
+
+  @@index([shop])
 }
 
 model ProcessedLineItem {
   id                Int      @id @default(autoincrement())
-  shopifyLineItemId String   @unique
+  shop              String?
+  shopifyLineItemId String
   shopifyOrderId    String
   shopifyVariantId  String
   quantity          Int
   soldAt            DateTime
   processedAt       DateTime @default(now())
+
+  @@unique([shop, shopifyLineItemId])
 }

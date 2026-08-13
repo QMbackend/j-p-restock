@@ -80,7 +80,7 @@ const RESTOCK_VARIANTS_QUERY = `#graphql
   }
 `;
 
-export async function syncRecentOrders(admin) {
+export async function syncRecentOrders(admin, shop) {
   const response = await admin.graphql(RECENT_ORDERS_QUERY);
   const result = await response.json();
 
@@ -99,8 +99,9 @@ export async function syncRecentOrders(admin) {
       }
 
       const existingLineItem =
-        await db.processedLineItem.findUnique({
+        await db.processedLineItem.findFirst({
           where: {
+            shop,
             shopifyLineItemId: item.id,
           },
         });
@@ -112,6 +113,7 @@ export async function syncRecentOrders(admin) {
       await db.$transaction([
         db.processedLineItem.create({
           data: {
+            shop,
             shopifyLineItemId: item.id,
             shopifyOrderId: order.id,
             shopifyVariantId: item.variant.id,
@@ -122,10 +124,14 @@ export async function syncRecentOrders(admin) {
 
         db.restockItem.upsert({
           where: {
-            shopifyVariantId: item.variant.id,
+            shop_shopifyVariantId: {
+              shop,
+              shopifyVariantId: item.variant.id,
+            },
           },
 
           create: {
+            shop,
             shopifyVariantId: item.variant.id,
             productTitle: item.title,
             variantTitle: item.variantTitle || null,
@@ -142,6 +148,7 @@ export async function syncRecentOrders(admin) {
           },
 
           update: {
+            shop,
             productTitle: item.title,
             variantTitle: item.variantTitle || null,
 
@@ -166,7 +173,7 @@ export async function syncRecentOrders(admin) {
   }
 
   const refreshedVariants =
-    await refreshRestockInventory(admin);
+    await refreshRestockInventory(admin, shop);
 
   return {
     success: true,
@@ -176,9 +183,10 @@ export async function syncRecentOrders(admin) {
   };
 }
 
-async function refreshRestockInventory(admin) {
+async function refreshRestockInventory(admin, shop) {
   const activeRestockItems = await db.restockItem.findMany({
     where: {
+      shop,
       needsRestock: {
         gt: 0,
       },
@@ -235,7 +243,10 @@ async function refreshRestockInventory(admin) {
 
       await db.restockItem.update({
         where: {
-          shopifyVariantId: variant.id,
+          shop_shopifyVariantId: {
+            shop,
+            shopifyVariantId: variant.id,
+          },
         },
 
         data: {

@@ -1,6 +1,7 @@
 import db from "../db.server";
 
 export async function restockVariant({
+  shop,
   variantId,
   quantityValue,
   removeFromQueue = false,
@@ -15,7 +16,10 @@ export async function restockVariant({
 
   const restockItem = await db.restockItem.findUnique({
     where: {
-      shopifyVariantId: variantId,
+      shop_shopifyVariantId: {
+        shop,
+        shopifyVariantId: variantId,
+      },
     },
   });
 
@@ -30,7 +34,10 @@ export async function restockVariant({
   if (removeFromQueue) {
     await db.restockItem.update({
       where: {
-        shopifyVariantId: variantId,
+        shop_shopifyVariantId: {
+        shop,
+          shopifyVariantId: variantId,
+        },
       },
       data: {
         needsRestock: 0,
@@ -83,7 +90,10 @@ export async function restockVariant({
   await db.$transaction([
     db.restockItem.update({
       where: {
-        shopifyVariantId: variantId,
+        shop_shopifyVariantId: {
+          shop,
+          shopifyVariantId: variantId,
+        },
       },
       data: {
         needsRestock: remainingQuantity,
@@ -92,6 +102,7 @@ export async function restockVariant({
 
     db.restockEvent.create({
       data: {
+        shop,
         shopifyVariantId: variantId,
         quantity,
       },
