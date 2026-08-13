@@ -1,4 +1,9 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { DateTime } from "luxon";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import {
@@ -193,6 +198,8 @@ export default function RestockDashboard() {
   const [sortBy, setSortBy] =
     useState("recent");
 
+  const pendingCardAnchor = useRef(null);
+
   useEffect(() => {
     const intervalId = setInterval(() => {
       if (syncFetcher.state === "idle") {
@@ -325,6 +332,66 @@ export default function RestockDashboard() {
 
       return 0;
     });
+
+    const handleBeforeCardAction = (itemId) => {
+      const currentIndex = filteredQueue.findIndex(
+        (item) => item.id === itemId,
+      );
+
+      if (currentIndex === -1) {
+        return;
+      }
+
+      // Prefer the next card. If this is the last card,
+      // use the previous card instead.
+      const anchorItem =
+        filteredQueue[currentIndex + 1] ??
+        filteredQueue[currentIndex - 1];
+
+      if (!anchorItem) {
+        return;
+      }
+
+      const anchorElement = document.querySelector(
+        `[data-restock-card-id="${anchorItem.id}"]`,
+      );
+
+      if (!anchorElement) {
+        return;
+      }
+
+      pendingCardAnchor.current = {
+        id: anchorItem.id,
+        top: anchorElement.getBoundingClientRect().top,
+      };
+    };
+
+    useLayoutEffect(() => {
+  const anchor = pendingCardAnchor.current;
+
+  if (!anchor) {
+    return;
+  }
+
+  const anchorElement = document.querySelector(
+    `[data-restock-card-id="${anchor.id}"]`,
+  );
+
+  if (!anchorElement) {
+    pendingCardAnchor.current = null;
+    return;
+  }
+
+  const newTop =
+    anchorElement.getBoundingClientRect().top;
+
+  window.scrollBy({
+    top: newTop - anchor.top,
+    behavior: "instant",
+  });
+
+  pendingCardAnchor.current = null;
+}, [restockQueue]);
 
   const isSyncing =
     syncFetcher.state !== "idle";
@@ -579,14 +646,19 @@ export default function RestockDashboard() {
           </s-box>
         ) : (
           <s-stack gap="base">
-            {filteredQueue.map(
-              (item) => (
+            {filteredQueue.map((item) => (
+              <div
+                key={item.id}
+                data-restock-card-id={item.id}
+              >
                 <RestockCard
-                  key={item.id}
                   item={item}
+                  onBeforeAction={() =>
+                    handleBeforeCardAction(item.id)
+                  }
                 />
-              ),
-            )}
+              </div>
+            ))}
           </s-stack>
         )}
       </s-section>

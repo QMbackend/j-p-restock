@@ -80,7 +80,10 @@ function formatLastSold(lastSaleAt) {
   return `${date} at ${time}`;
 }
 
-export default function RestockCard({ item }) {
+export default function RestockCard({
+  item,
+  onBeforeAction,
+}) {
   const shopify = useAppBridge();
   const restockFetcher = useFetcher();
   const isRestocking = restockFetcher.state !== "idle";
@@ -235,7 +238,10 @@ export default function RestockCard({ item }) {
       </div>
 
     {canRestock ? (
-      <restockFetcher.Form method="post">
+      <restockFetcher.Form
+  method="post"
+  onSubmit={onBeforeAction}
+>
         <input
           type="hidden"
           name="intent"
@@ -302,7 +308,10 @@ export default function RestockCard({ item }) {
         </div>
       </restockFetcher.Form>
     ) : (
-      <restockFetcher.Form method="post">
+      <restockFetcher.Form
+  method="post"
+  onSubmit={onBeforeAction}
+>
         <input
           type="hidden"
           name="intent"
